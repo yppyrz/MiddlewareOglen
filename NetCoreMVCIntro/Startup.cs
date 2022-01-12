@@ -85,16 +85,23 @@ namespace NetCoreMVCIntro
 
         // public static IApplicationBuilder Use(this IApplicationBuilder app, Func<HttpContext, Func<Task>, Task> middleware);
 
+        // RUN middleware
+        // Use middleware
+        // Map middelware
+        // UseWhen middleware (Çalýþma zamanýnda ek bir servisi sürece dahil etmek için) // alttaki middleware de çalýþtýrýr.
+        // MapWhen (Çalýþma zamanýnda bir karar verip ekstra bir özelliði çalýþtýrmak için) altýndaki middleware çalýþmaz.
+        // CustomMiddleware ile kendi middleware yaptýk.
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
             // app.UseWelcomePage(); sayfa yapým aþamasýnda sayfasý
 
             // app.UseMiddleware<LoggerMiddleware>(); // 1. yöntem
-            //app.UseLogger2(); // extention ile geniþletim direk ismi ile kullandýk.
+            app.UseMyMiddleware(); // extention ile geniþletim direk ismi ile kullandýk.
 
 
-            app.UseMyMiddleware();
+            //app.UseMyMiddleware();
 
             //app.Run(async (context) =>
             //{
@@ -149,6 +156,65 @@ namespace NetCoreMVCIntro
 
             // run dan sonra bir middleware varsa bu middle next methoduna sahip olmadýðý için yani sonlandýrýcý bir middleware olduðu için baþka hiç bir kod çalýþtýrmaz.
 
+            // Map middlewafre ise gelen path isteði ile eþletiði durumlarda bir iþlem yapmak için kullanýlýr.
+            app.Map("/Home/Index", application =>
+            {
+                application.Run(async context =>
+                {
+                    await context.Response.WriteAsync("Hello from non-Map delegate. <p>");
+                });
+
+                //app
+
+            });
+
+            // name alanýný querystring üzerinden gönderince bu kýsma düþeceðiz.
+            // MapWhen lambda ile bir true false kontrolü yapýp eðer durum true ise bu durumda bir iþlemin gerçekleþmesini saðlarýz.
+            // MapWhen lambda ile bir true false kontrolü yapýp eðer durum true ise bu durumda bir iþlemin gerçekleþmesini saðlarýz.
+            //app.MapWhen(context => context.Request.Query.ContainsKey("name"),
+            //                  application => {
+
+
+
+            //                      application.Run(async context =>
+            //                      {
+            //                          await context.Response.WriteAsync("name parametresi yakalandý");
+            //                      });
+
+            //                  });
+
+
+            // MapWhen ile UseWhen middleware arasýndaki fark mapWhen iþleminden sonra next ile diðer middleware çalýþtýrmak için yönlensek dahi mapWhen altýndaki hiç bir middleware istek mapWhen kodunu gerçekleþtirdikten sonra çalýþmayacaktýr. UseWhen gelen istekdeki deðerlere eþleþtiði takdirde diðer middleware ile birlikte ekstra baþka bir middleware request pipeline hattýna girmesini saðlayacak. Diðer middlewarelerin çalýþmasýna engel olmayacaktýr. BNu sebepten dolayý MapWhen kullanýrken iyi düþünmek lazým. Fakat dinamik durumlara karþý araya bazý servislerin eklenmesi istiyorsak yani uygulama farklý durumalara göre bazý yetenekleri uygulama çalýþýrken kazansýn isgtersek UseWhen kullanýlabilir. 
+            app.Use(NextMiddleware1);
+
+          
+            // Test => /Home/Privacy?name ile çalýþýr
+
+            app.MapWhen(context => context.Request.Query.ContainsKey("name"),
+                             application => {
+
+
+                                 
+
+                                 application.Use(async (context,next) =>
+                                 {
+                                     await context.Response.WriteAsync("name parametresi yakalandý");
+                                     await next();
+                                 });
+
+                             });
+
+
+            //app.UseWhen(context => context.Request.Query.ContainsKey("branch"), app => { 
+
+
+            //});
+
+            // Kendi yazdýðýmýz use middlewatrelerimiz
+            app.Use(NextMiddleware1);
+            app.Use(NextMiddleware2);
+
+
 
 
             //if (env.IsDevelopment())
@@ -180,5 +246,5 @@ namespace NetCoreMVCIntro
         }
     }
 
-  
+
 }
