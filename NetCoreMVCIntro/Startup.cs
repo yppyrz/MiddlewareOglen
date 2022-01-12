@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NetCoreMVCIntro.Middlewares;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,10 +24,12 @@ namespace NetCoreMVCIntro
 
 
     public delegate Task RequestDelegate(HttpContext context);
+  
     // net core ortamýnda gelen isteklerin execute edilmesini çalýþtýrýlmasýný bu delegate saðlar. yani gelen istekleri async olarak yakalar, içerisinde HttpContext ile web uygulamasýna ait tüm nesneleri barýndýrýr. HttpContext içerisinde temelde iki önemli Nesne bulunmaktadýr. Request diðeri ise Response.  Request Client taraftan web sayfasýna gelen isteði sunucu (web serverda) yakalamamýzý saðlar. Response ise web sunucusunun Web Client'a nasýl bir istek döndüreleceði ile ilgilenir. Html Response, Json Response, Text Response gibi farklý tipte Responselar suncuya döndürülebilir. Session kullanýcýya ait Sunucu tarafýndaki oturum bilgilerini HttpContext barýndýrabiliriz. Oturum açan kullanýcýya ait bilgiler User bilgilerini sunucuda saklayabiliriz. 
 
     // RequestDelegate Request Sevk edici. Gelen isteðin yönlendirip bir eylemin çalýþmasýný saðlayan elçi.
     // Delegate methodlarýn ayný imzada çalýþmasýný saðlar. Bu sebep ile bir web request geldiði an itibari ile Async yani Task tipinde sonuç döndürmeyen ve içerisinde parametre olarak HttpContext barýndýran herhangi bir methodu çalýþtýrabilir.
+
 
 
     public class Startup
@@ -44,10 +47,14 @@ namespace NetCoreMVCIntro
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
+            // IOC iþlemlerini ise ConfigureServices kýsmýnda yapýyoruz.
+            services.AddTransient<MyMiddleware2>(); // IOC ile her istekte bu middleware sýnýfýnýn instance al
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 
+
+      
         public async Task MyFunc(HttpContext context)
         {
             await Task.FromResult("OK");
@@ -58,29 +65,91 @@ namespace NetCoreMVCIntro
             return "OK";
         }
 
+        // next ile bir sonraki middleware süreci aktarmayan middleware
+        private Task MyMiddleware(HttpContext context)
+        {
+            return context.Response.WriteAsync("Hello World! ");
+        }
+
+        // next methodu ile süreci diðer middleware aktaran middleware
+        private async Task NextMiddleware1(HttpContext context, Func<Task> next)
+        {
+             await next();
+
+        }
+
+        private async Task NextMiddleware2(HttpContext context, Func<Task> next)
+        {
+             await next();
+        }
+
+        // public static IApplicationBuilder Use(this IApplicationBuilder app, Func<HttpContext, Func<Task>, Task> middleware);
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
-        
-          
+            // app.UseWelcomePage(); sayfa yapým aþamasýnda sayfasý
+
+            // app.UseMiddleware<LoggerMiddleware>(); // 1. yöntem
+            //app.UseLogger2(); // extention ile geniþletim direk ismi ile kullandýk.
+
+
+            app.UseMyMiddleware();
+
+            //app.Run(async (context) =>
+            //{
+            //    await context.Response.WriteAsync("Hello World!");
+            //});
+
+            //app.Use(NextMiddleware1);
+            //app.Use(NextMiddleware2);
+
+            //app.Use(async (context, next) => // next Func<Task> async Function tipi
+            //{
+            //    if(context.Request.Path == "/Home/Contact")
+            //    {
+            //        // bu url gelince bir iþ yap bir kontrol yap vs.
+            //    }
+
+            //    // context ise httpContext olarak diðer parametre olarak yakalanýyor
+            //     await next(); // süreci baþka bir middleware aktardým
+            //     // next async bir function olduðu önüne await keyword yazdýk.
+            //});
+
+
+            // bu kullanýmda RequestHandler tipinde bir method tetikleme þekli Method ismine göre çalýþýr yada aþaðýdaki gibi
+            //app.Run(MyMiddleware);
+            // Run ile çalýþan middleware içerisinde next methodu barýndýrmadýðý için diðer middlewareleri yok sayar. Eðer bir middleware Run middleware gibi yazýlmýþ olan middleware uygulamada en son middleware olarak kullanýlmalýdýr.
+
+            /*
+         app.Run(async (context) =>
+         {
+
+
+             // JS callback benzeri bir yazým söz konusudur.
+             // IApplicationBuilder extention yazýp, RequestDelegate ile bir action tetikleyecek bir mekanizma kurup, bu mekanizma üzerinden bir eylemi yaparak Request pipeline bir özellik kazandýrmýþ bunada Middleware demiþ.
+
+
+             // delegate ile ayný imza bir method tanýmlayýp, delegate iþi devrettik. delegate de bu methodun çalýþmasýný saðladý.
+             //var d = new RequestDelegate(MyFunc);
+             //await d.Invoke(context); // delegate üzerinden method çalýþtýrmýþ olduk.
+
+
+
+             await context.Response.WriteAsync("Hello World!");
+
+         });
+         */
+
+
+            // Use middleware içerisinde next methodu barýndýrdýklarýnda iþini bitirdikten sonra iþi diðer middleware devreder bu sebep ile her zaman run middlewarelerden önce kullanýlmalýdýrr.
+
 
             // Middleware ara yazýlým. Uygulamaya yapýlan isteklerde isteðin sonladýrmadan önce araya girip uygulamaya yeni bir davranýþý çalýþma zamanýnda ekleme iþlemi. 
 
             // run dan sonra bir middleware varsa bu middle next methoduna sahip olmadýðý için yani sonlandýrýcý bir middleware olduðu için baþka hiç bir kod çalýþtýrmaz.
-            app.Run(async (context) =>
-            {
-                // JS callback benzeri bir yazým söz konusudur.
-                // IApplicationBuilder extention yazýp, RequestDelegate ile bir action tetikleyecek bir mekanizma kurup, bu mekanizma üzerinden bir eylemi yaparak Request pipeline bir özellik kazandýrmýþ bunada Middleware demiþ.
 
 
-                // delegate ile ayný imza bir method tanýmlayýp, delegate iþi devrettik. delegate de bu methodun çalýþmasýný saðladý.
-                //var d = new RequestDelegate(MyFunc);
-                //await d.Invoke(context); // delegate üzerinden method çalýþtýrmýþ olduk.
-
-
-                await context.Response.WriteAsync("Hello World!");
-
-            });
 
             //if (env.IsDevelopment())
             //{

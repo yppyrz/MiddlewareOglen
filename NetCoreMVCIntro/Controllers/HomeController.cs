@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using NetCoreMVCIntro.Models;
+using NetCoreMVCIntro.StringExtentions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,12 +16,18 @@ namespace NetCoreMVCIntro.Controllers
 
         public HomeController(ILogger<HomeController> logger)
         {
+
+
             _logger = logger;
         }
 
         public IActionResult Index()
         {
             ViewBag.Message = "wdadas";
+
+            // JS Prototype ile yaptığımızın aynısını c# ile yaptık.
+            "deneme".ToUpperCase();
+            string date2 = DateTime.Now.GetPrettyDate();
 
             return View();
         }
