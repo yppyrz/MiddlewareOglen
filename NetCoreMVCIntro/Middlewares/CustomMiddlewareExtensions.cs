@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace NetCoreMVCIntro.Middlewares
 {
-    public static class MyMiddlewareExtensions
+    public static class CustomMiddlewareExtensions
     {
-        public static IApplicationBuilder UseMyMiddleware(this IApplicationBuilder builder)
+        public static IApplicationBuilder UseCustomMiddleware(this IApplicationBuilder builder)
         {
-            return builder.UseMiddleware<MyMiddleware2>();
+            return builder.UseMiddleware<MyMiddleware>();
         }
     }
 }

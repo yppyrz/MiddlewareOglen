@@ -20,6 +20,11 @@ namespace NetCoreMVCIntro
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    // kestrel ayarlarýný yapabildiðimiz yer.
+                    //webBuilder.ConfigureKestrel(serverOptions =>
+                    //{
+                    //    serverOptions.
+                    //});
                     webBuilder.UseStartup<Startup>();
                 });
     }

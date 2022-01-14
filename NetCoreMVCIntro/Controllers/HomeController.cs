@@ -18,11 +18,16 @@ namespace NetCoreMVCIntro.Controllers
         {
 
 
+
+
             _logger = logger;
         }
 
+        [HttpGet("home")]
         public IActionResult Index()
         {
+ 
+
             ViewBag.Message = "wdadas";
 
             // JS Prototype ile yaptığımızın aynısını c# ile yaptık.
