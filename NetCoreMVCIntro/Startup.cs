@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace NetCoreMVCIntro
 {
@@ -315,6 +316,16 @@ namespace NetCoreMVCIntro
                         }
                         else if(context.Request.ContentType == "x-www-form-urlencoded")
                         {
+                            HttpUtility.UrlDecode(body);
+                            
+                            
+                        }
+                        else if (context.Request.ContentType == "application/x-www-form-urlencoded")
+                        {
+                            var decodedData = HttpUtility.UrlDecode(body);
+
+                            NetCoreMVCIntro.BodyParser.BodyParser.Parse<User>(decodedData);
+
                             // var data = bodyParser.Parse<User>(body); Category 
                         }
                     }
